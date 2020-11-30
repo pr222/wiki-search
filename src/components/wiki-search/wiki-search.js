@@ -6,6 +6,7 @@
  */
 
 const urlSearch = 'https://en.wikipedia.org/w/api.php?action=opensearch&origin=*&search='
+const urlExtract = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=200&origin=*&format=json&titles='
 
 /**
  * Html-template for this component.
@@ -29,8 +30,10 @@ template.innerHTML = `
   <input type="search" id="wikiSearch" name="wikiSearch" autocomplete="off" list="search-suggestion-list" autofocus>
   <input type="submit" value="Search now">  
   <datalist id="search-suggestion-list" class="hidden"></datalist>
-  
 </form>
+
+<div id="article">
+</div>
 `
 
 /**
@@ -50,7 +53,7 @@ customElements.define('wiki-search',
         .appendChild(template.content.cloneNode(true))
 
       this._inputField = this.shadowRoot.querySelector('#wikiSearch')
-      this._submitButton = this.shadowRoot.querySelector('input[type="submit"]')
+      this._submitButton = this.shadowRoot.querySelector('form')
       this._datalist = this.shadowRoot.querySelector('#search-suggestion-list')
 
       this._onInput = this._onInput.bind(this)
@@ -82,7 +85,6 @@ customElements.define('wiki-search',
       const input = this._inputField.value
       console.log('Ready to get options: ' + input)
 
-      // LOL, not needed:
       // // Make options visible if list is hidden.
       // if (input.length > 0 && this._datalist.classList.contains('hidden')) {
       //   this._datalist.classList.remove('hidden')
@@ -103,9 +105,16 @@ customElements.define('wiki-search',
      *
      * @param {*} event - Submitting the search.
      */
-    _onSubmit (event) {
-      // event.preventDefault()
-      //
+    async _onSubmit (event) {
+      console.log('prevent default?')
+      event.preventDefault()
+
+      const input = this._inputField.value
+      console.log('Ready to get extract: ' + input)
+
+      const extract = await this._getExtract(input)
+
+      this._displayExtract(extract)
     }
 
     /**
@@ -129,7 +138,7 @@ customElements.define('wiki-search',
      */
     async _getSearchOptions (searchInput) {
       const options = []
-      console.log('_getSearchOptions')
+      console.log('_getSearchOptions-function start')
       // Not interested in search-results with only 1 word.
       if (searchInput.length > 0) {
         const [, option, , link] = await this._getSomething(urlSearch, searchInput)
@@ -144,6 +153,25 @@ customElements.define('wiki-search',
       console.log('Options-array: ')
       console.log(options)
       return options
+    }
+
+    /**
+     * Getting the extract...
+     *
+     * @param {string} searchInput - Search input in input field.
+     * @returns {Promise<object>} - the extract object response in JSON.
+     */
+    async _getExtract (searchInput) {
+      console.log('_getExtract-function start')
+
+      const extract = await this._getSomething(urlExtract, searchInput.trim())
+      console.log(extract)
+      console.log(Object.values(extract.query.pages).shift())
+      const o = Object.values(extract.query.pages).shift()
+      console.log(o)
+      console.log(o.title)
+      console.log(o.extract)
+      return o
     }
 
     /**
@@ -166,6 +194,17 @@ customElements.define('wiki-search',
         option.append(`${name}`)
         this._datalist.appendChild(option)
       }
+    }
+
+    /**
+     * Display the extracted article.
+     *
+     * @param {*} extract - Extract.
+     */
+    _displayExtract (extract) {
+      console.log('Display Extract')
+      console.log(extract.title)
+      console.log(extract.extract)
     }
   }
 )
