@@ -6,7 +6,7 @@
  */
 
 const urlSearch = 'https://en.wikipedia.org/w/api.php?action=opensearch&origin=*&search='
-const urlExtract = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=200&origin=*&format=json&titles='
+const urlExtract = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exchars=200&explaintext&origin=*&format=json&titles='
 
 /**
  * Html-template for this component.
@@ -205,6 +205,17 @@ customElements.define('wiki-search',
       console.log('Display Extract')
       console.log(extract.title)
       console.log(extract.extract)
+
+      const wrapper = this.shadowRoot.querySelector('#article')
+      const h1 = document.createElement('h1')
+      const title = document.createTextNode(extract.title)
+      const p = document.createElement('p')
+      const text = document.createTextNode(extract.extract)
+
+      wrapper.appendChild(h1)
+      h1.append(title)
+      wrapper.appendChild(p)
+      p.appendChild(text)
     }
   }
 )
